@@ -131,41 +131,35 @@ def create_stacked_chart(x_values, fixed_value, vary_by_store=True):
         xaxis_title="门店数" if vary_by_store else "SKU数",
         yaxis_title="金额",
         showlegend=True,
-        margin=dict(t=100, b=150, l=50, r=20),  # 增加底部边距，容纳图例
+        margin=dict(t=100, b=150, l=50, r=20),
         hoverlabel=dict(
             bgcolor="white",
             font_size=12,
             font_family="Arial"
         ),
         yaxis=dict(
-            range=[0, max_total * 1.1]
+            range=[0, max_total * 1.1],
+            fixedrange=True
         ),
-        # 移除所有模式栏按钮
+        xaxis=dict(
+            fixedrange=True
+        ),
         modebar_remove=[
             'zoom', 'pan', 'select', 'lasso2d', 'zoomIn2d', 
             'zoomOut2d', 'autoScale2d', 'resetScale2d',
             'hoverClosestCartesian', 'hoverCompareCartesian',
             'toggleSpikelines'
         ],
-        # 将图例放在图表下方
         legend=dict(
-            orientation="h",  # 水平排列
+            orientation="h",
             yanchor="top",
-            y=-0.2,  # 调整垂直位置
+            y=-0.2,
             xanchor="center",
-            x=0.5,  # 居中
-            font=dict(size=10)  # 减小图例字体大小
+            x=0.5,
+            font=dict(size=10)
         ),
-        # 禁用图表缩放和平移
-        dragmode=False,
-        # 固定比例
-        fixedrange=True
+        dragmode=False
     )
-    
-    # 对Y轴也禁用缩放
-    fig.update_yaxes(fixedrange=True)
-    # 对X轴也禁用缩放
-    fig.update_xaxes(fixedrange=True)
     
     return fig
 
