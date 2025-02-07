@@ -145,18 +145,42 @@ def create_stacked_chart(x_values, fixed_value, vary_by_store=True):
     return fig
 
 # Streamlit 应用
+st.set_page_config(
+    page_title="成本分析",
+    layout="wide",  # 使用宽屏布局
+    initial_sidebar_state="collapsed"  # 默认收起侧边栏
+)
+
 st.title('成本分析')
 
-col1, col2 = st.columns(2)
+# 添加缓存装饰器，避免重复计算
+@st.cache_data
+def get_chart(x_values, fixed_value, vary_by_store=True):
+    return create_stacked_chart(x_values, fixed_value, vary_by_store)
 
-with col1:
+# 使用tabs而不是columns，在手机上显示效果更好
+tab1, tab2 = st.tabs(["按门店数变化", "按SKU数变化"])
+
+with tab1:
     st.subheader('按门店数变化图')
-    sku_value = st.slider('选择SKU数:', 100, 1000, 400, 100)
+    sku_value = st.slider('选择SKU数:', 100, 1000, 400, 100, key='sku_slider')
     store_range = np.arange(10, 51, 5)
-    st.plotly_chart(create_stacked_chart(store_range, sku_value, vary_by_store=True))
+    chart1 = get_chart(store_range, sku_value, vary_by_store=True)
+    # 设置图表大小
+    chart1.update_layout(
+        height=500,  # 减小图表高度
+        width=None,  # 自适应宽度
+    )
+    st.plotly_chart(chart1, use_container_width=True)
 
-with col2:
+with tab2:
     st.subheader('按SKU数变化图')
-    store_value = st.slider('选择门店数:', 10, 50, 20, 5)
+    store_value = st.slider('选择门店数:', 10, 50, 20, 5, key='store_slider')
     sku_range = np.arange(100, 1001, 100)
-    st.plotly_chart(create_stacked_chart(sku_range, store_value, vary_by_store=False)) 
+    chart2 = get_chart(sku_range, store_value, vary_by_store=False)
+    # 设置图表大小
+    chart2.update_layout(
+        height=500,  # 减小图表高度
+        width=None,  # 自适应宽度
+    )
+    st.plotly_chart(chart2, use_container_width=True) 
