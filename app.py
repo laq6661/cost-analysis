@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 
-def calculate_metrics(store_count, sku_count, profit_rate=0.087):
+def calculate_metrics(store_count, sku_count):
     """
     计算经营指标
     """
@@ -19,16 +19,33 @@ def calculate_metrics(store_count, sku_count, profit_rate=0.087):
     store_ratio = store_count / base_stores
     sku_ratio = sku_count / base_sku
     
-    # 计算销售相关指标
+    # 计算采购价出库额
     采购价出库额 = base_data['30天采购价出库额'] * store_ratio * sku_ratio
+    
+    # 修改后的动态毛利率计算
+    base_profit_rate = 0.072
+    sku_groups = sku_count / 100  # 每100个SKU为一组
+    monthly_revenue_per_group = 采购价出库额 / sku_groups  # 每组的月度出库额
+    profit_rate_increase = max(0, monthly_revenue_per_group / 100000 * 0.01)  # 每10万增加1%
+    profit_rate = min(0.15, base_profit_rate + profit_rate_increase)  # 上限15%
+    
+    # 计算利润
     利润 = 采购价出库额 * profit_rate
     
     # 计算各项成本
-    人员成本 = (sku_count / 10) * store_count * 8 / 120 / 8 / 6 * 5500
-    运输成本 = store_count * 350 / 12 * 2 * 4
+    # 修改后的人员成本计算
+    人员成本 = (sku_count / 10) * store_count * 8 / 120 / 6 / 6 * 5500
+    
+    # 修改后的运输成本计算
+    base_transport = 350
+    dynamic_transport = 采购价出库额 / 8 / (store_count / 10) * 0.016
+    运输成本 = store_count * max(base_transport, dynamic_transport) * 2 * 4 / 10
+    
+    # 其他成本保持不变
     周转箱成本 = store_count * 10 * 2.1
     其他费用 = store_count / 10 * 300
     仓租成本 = max(sku_count - 500, 0) * 15
+    
     合计物流成本 = 人员成本 + 运输成本 + 周转箱成本 + 其他费用 + 仓租成本
     净利额 = 利润 - 合计物流成本
     
@@ -128,37 +145,41 @@ def create_stacked_chart(x_values, fixed_value, vary_by_store=True):
     fig.update_layout(
         title=title,
         barmode='stack',
-        xaxis_title="门店数" if vary_by_store else "SKU数",
-        yaxis_title="金额",
         showlegend=True,
+        dragmode=False,
+        height=500,
         margin=dict(t=100, b=150, l=50, r=20),
-        hoverlabel=dict(
-            bgcolor="white",
-            font_size=12,
-            font_family="Arial"
-        ),
-        yaxis=dict(
-            range=[0, max_total * 1.1],
-            fixedrange=True
-        ),
-        xaxis=dict(
-            fixedrange=True
-        ),
-        modebar_remove=[
-            'zoom', 'pan', 'select', 'lasso2d', 'zoomIn2d', 
-            'zoomOut2d', 'autoScale2d', 'resetScale2d',
-            'hoverClosestCartesian', 'hoverCompareCartesian',
-            'toggleSpikelines'
-        ],
         legend=dict(
             orientation="h",
             yanchor="top",
             y=-0.2,
             xanchor="center",
-            x=0.5,
-            font=dict(size=10)
-        ),
-        dragmode=False
+            x=0.5
+        )
+    )
+    
+    # 分别更新轴的设置
+    fig.update_xaxes(
+        title="门店数" if vary_by_store else "SKU数",
+        fixedrange=True
+    )
+    
+    fig.update_yaxes(
+        title="金额",
+        range=[0, max_total * 1.1],
+        fixedrange=True
+    )
+    
+    # 更新配置以移除工具栏按钮
+    fig.update_layout(
+        modebar=dict(
+            remove=[
+                'zoom', 'pan', 'select', 'lasso2d', 'zoomIn2d', 
+                'zoomOut2d', 'autoScale2d', 'resetScale2d',
+                'hoverClosestCartesian', 'hoverCompareCartesian',
+                'toggleSpikelines'
+            ]
+        )
     )
     
     return fig
